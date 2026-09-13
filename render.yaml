@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: nowshera-events-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: FRONTEND_ORIGINS
+        sync: false
+      - key: AUTH_CONFIRMATION_REDIRECT_URL
+        sync: false
+      - key: PASSWORD_RESET_REDIRECT_URL
+        sync: false
