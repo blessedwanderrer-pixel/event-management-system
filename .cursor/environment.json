@@ -1,0 +1,22 @@
+{
+  "name": "Nowshera Events (full-stack)",
+  "install": "bash .cursor/scripts/install.sh",
+  "start": "bash .cursor/scripts/start.sh",
+  "terminals": [
+    {
+      "name": "backend",
+      "command": "cd backend && env -u DATABASE_URL ./venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8000",
+      "description": "FastAPI backend API (http://127.0.0.1:8000, docs at /docs)."
+    },
+    {
+      "name": "frontend",
+      "command": "cd frontend && npm run dev -- --host 127.0.0.1 --port 5173",
+      "description": "React + Vite dev server (http://127.0.0.1:5173)."
+    }
+  ],
+  "ports": [
+    { "name": "web", "port": 5173 },
+    { "name": "api", "port": 8000 },
+    { "name": "auth-proxy", "port": 9999 }
+  ]
+}
