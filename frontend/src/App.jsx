@@ -1,9 +1,31 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Button, Card, CardBody, Typography } from '@material-tailwind/react';
+import {
+  CalendarDaysIcon,
+  TicketIcon,
+  Squares2X2Icon,
+  UserGroupIcon,
+  LightBulbIcon,
+  MapPinIcon,
+  AcademicCapIcon,
+  UserIcon,
+  EnvelopeIcon,
+  LockClosedIcon,
+  EyeIcon,
+  EyeSlashIcon,
+} from '@heroicons/react/24/solid';
 import { api } from './api';
+import { CountUp, CursorPaintText, FadeIn, PageTransition, ZoomHover, useMotionSafe } from './components/Motion';
+import { Icons, StatusBadge } from './components/ui';
+import ThemeNavbar from './components/theme/Navbar';
+import ThemeFooter from './components/theme/Footer';
+import EventCard from './components/theme/EventCard';
+import StatsCard from './components/theme/StatsCard';
+import { eventCoverImage } from './eventImages';
 import { usePageMeta } from './seo';
 import { authLinkError, clearAuthParamsFromUrl, clearSession, getAccessToken, readAuthParams, saveSession } from './session';
-import { AboutPage, ContactActionButtons, ContactPage, FaqPage, PrivacyPage, SITE_CONTACT, TermsPage } from './pages/PublicPages';
+import { AboutPage, CeoPage, ContactActionButtons, ContactPage, FaqPage, PrivacyPage, SITE_CONTACT, TermsPage } from './pages/PublicPages';
 
 function useAuth() {
   const [state, setState] = useState({ loading: true, profile: null });
@@ -75,9 +97,11 @@ function App() {
         <div className="app-shell">
           <Layout />
           <div className="route-stage" key={location.pathname}>
+            <PageTransition>
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/about" element={<AboutPage />} />
+              <Route path="/ceo" element={<CeoPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/faq" element={<FaqPage />} />
               <Route path="/privacy-policy" element={<PrivacyPage />} />
@@ -103,6 +127,7 @@ function App() {
               <Route path="/admin/reports" element={<AdminGuard><Reports /></AdminGuard>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </PageTransition>
           </div>
           <SiteFooter />
           <FloatingContactButtons />
@@ -117,73 +142,15 @@ function Layout() {
   const { profile, refreshAuth } = useAuthState();
   const navigate = useNavigate();
   const location = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
   const isAdminArea = location.pathname.startsWith('/admin') && location.pathname !== '/admin/login';
   const logout = async () => {
-    closeMenu();
     await api.logout();
     clearSession();
     navigate(isAdminArea ? '/admin/login' : '/');
     refreshAuth();
   };
-  const closeMenu = () => setMenuOpen(false);
 
-  useEffect(() => { setMenuOpen(false); }, [location.pathname]);
-
-  return (
-    <header className={`topbar ${menuOpen ? 'menu-open' : ''}`}>
-      <Link to={profile?.role === 'admin' && isAdminArea ? '/admin/dashboard' : '/'} className="brand" onClick={closeMenu}>
-        <span className="brand-mark">NE</span>
-        <span>Nowshera Events<span className="brand-dot">.</span></span>
-      </Link>
-      <button
-        className="menu-toggle"
-        aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
-        aria-expanded={menuOpen}
-        onClick={() => setMenuOpen(!menuOpen)}
-      >
-        <span /><span />
-      </button>
-      <nav className={menuOpen ? 'nav-open' : ''} aria-label="Primary">
-        {profile?.role === 'admin' && isAdminArea ? (
-          <>
-            <NavLink to="/admin/dashboard" onClick={closeMenu}>Admin Dashboard</NavLink>
-            <NavLink to="/admin/events" onClick={closeMenu}>Events</NavLink>
-            <NavLink to="/admin/reports" onClick={closeMenu}>Reports</NavLink>
-            <div className="nav-auth">
-              <button className="text-button" type="button" onClick={logout}>Log out</button>
-            </div>
-          </>
-        ) : (
-          <>
-            <NavLink to="/events" onClick={closeMenu}>Explore</NavLink>
-            <NavLink to="/about" onClick={closeMenu}>About</NavLink>
-            <NavLink to="/contact" onClick={closeMenu}>Contact</NavLink>
-            <NavLink to="/faq" onClick={closeMenu}>FAQ</NavLink>
-            {profile && <NavLink to="/my-registrations" onClick={closeMenu}>My Registrations</NavLink>}
-            {profile?.role === 'admin' && (
-              <NavLink to="/admin/dashboard" onClick={closeMenu}>Admin Dashboard</NavLink>
-            )}
-            <div className="nav-auth">
-              {profile ? (
-                <>
-                  <NavLink to="/profile" className="nav-profile" onClick={closeMenu}>
-                    Profile
-                  </NavLink>
-                  <button className="text-button" type="button" onClick={logout}>Log out</button>
-                </>
-              ) : (
-                <>
-                  <NavLink to="/login" onClick={closeMenu}>Log In</NavLink>
-                  <NavLink to="/signup" className="nav-cta" onClick={closeMenu}>Create Account</NavLink>
-                </>
-              )}
-            </div>
-          </>
-        )}
-      </nav>
-    </header>
-  );
+  return <ThemeNavbar profile={profile} onLogout={logout} />;
 }
 
 function FloatingContactButtons() {
@@ -201,51 +168,8 @@ function SiteFooter() {
   const { profile } = useAuthState();
   const location = useLocation();
   if (location.pathname.startsWith('/admin') && location.pathname !== '/admin/login') return null;
-
-  return (
-    <footer className="site-footer">
-      <div className="footer-grid">
-        <div className="footer-brand">
-          <Link to="/" className="brand">
-            <span className="brand-mark">NE</span>
-            <span>Nowshera Events<span className="brand-dot">.</span></span>
-          </Link>
-          <p>A professional event registration platform for discovering gatherings, reserving seats, and managing plans in one place.</p>
-          <ContactActionButtons compact className="footer-contact-actions" />
-        </div>
-        <div>
-          <h2>Explore</h2>
-          <Link to="/events">Explore Events</Link>
-          <Link to="/about">About Us</Link>
-          <Link to="/contact">Contact Us</Link>
-          <Link to="/faq">FAQ</Link>
-        </div>
-        <div>
-          <h2>Legal &amp; account</h2>
-          <Link to="/privacy-policy">Privacy Policy</Link>
-          <Link to="/terms">Terms &amp; Conditions</Link>
-          <Link to="/login">Login</Link>
-          <Link to="/signup">Create Account</Link>
-          {!profile && <Link to="/admin/login">Admin Login</Link>}
-          {profile && (
-            <>
-              <Link to="/profile">Profile</Link>
-              <Link to="/my-registrations">My Registrations</Link>
-            </>
-          )}
-        </div>
-        <div>
-          <h2>Contact</h2>
-          <p>WhatsApp: <a href={SITE_CONTACT.WHATSAPP_URL} target="_blank" rel="noopener noreferrer">{SITE_CONTACT.WHATSAPP_DISPLAY}</a></p>
-          <p>Gmail: <a href={SITE_CONTACT.GMAIL_URL} target="_blank" rel="noopener noreferrer">{SITE_CONTACT.EMAIL}</a></p>
-        </div>
-      </div>
-      <div className="footer-bottom">
-        <span>© {new Date().getFullYear()} Nowshera Events Co. All rights reserved.</span>
-        <Link className="text-link" to="/events">Explore Events <span>↗</span></Link>
-      </div>
-    </footer>
-  );
+  if (['/login', '/signup', '/forgot-password', '/reset-password'].includes(location.pathname)) return null;
+  return <ThemeFooter profile={profile} />;
 }
 
 function defaultHomeForRole(role) {
@@ -292,7 +216,12 @@ function AdminEntry() {
 }
 
 function Loading() {
-  return <main className="page centered"><div className="spinner" /><p>Loading your workspace...</p></main>;
+  return (
+    <main className="page centered">
+      <div className="spinner" aria-hidden="true" />
+      <p className="loading-copy">Loading your workspace...</p>
+    </main>
+  );
 }
 
 function EventSkeleton() {
@@ -301,7 +230,12 @@ function EventSkeleton() {
 
 function Notice({ error, children }) {
   if (!children) return null;
-  return <div className={error ? 'notice error' : 'notice'}>{children}</div>;
+  return (
+    <div className={error ? 'notice error' : 'notice'} role={error ? 'alert' : 'status'}>
+      {error ? <Icons.Alert size={18} /> : <Icons.Check size={18} />}
+      <div>{children}</div>
+    </div>
+  );
 }
 
 function Toast({ message, kind }) {
@@ -367,55 +301,125 @@ function Landing() {
 
   return (
     <main>
-      <section className="hero">
-        <div className="hero-backdrop" />
-        <div className="hero-copy">
-          <p className="eyebrow">Nowshera Events Co. / 2026</p>
-          <h1>Make room for<br /><em>what matters.</em></h1>
-          <p className="hero-lede">
-            A considered calendar of gatherings, ideas, and the people worth making time for.
-            Browse published events, reserve seats, and keep your plans in one place.
-          </p>
-          <div className="actions">
-            <Link className="button primary magnetic" to="/events">Explore <span>↗</span></Link>
-            {profile ? (
-              <Link className="button ghost" to="/my-registrations">My Registrations</Link>
-            ) : (
-              <>
-                <Link className="button ghost" to="/signup">Create Account</Link>
-                <Link className="button ghost" to="/login">Log In</Link>
-              </>
-            )}
+      <section className="hero-mt relative min-h-screen w-full overflow-hidden bg-[url('/images/landing-nowshera-events.jpg')] bg-cover bg-center bg-no-repeat">
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/35" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/40" />
+
+        <div className="relative z-10 flex min-h-screen flex-col">
+          <div className="container mx-auto flex flex-1 flex-col justify-center px-6 pb-10 pt-28 md:px-10 lg:max-w-[58%] lg:px-12">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-white/90 md:text-sm">
+              Connect · Learn · Grow
+            </p>
+            <h1 className="mb-5 text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
+              <CursorPaintText text="Nowshera" baseColor="#FF7A1A" paintColor="#FFFFFF" />
+              <CursorPaintText text="Events" baseColor="#FFFFFF" paintColor="#FF7A1A" />
+            </h1>
+            <p className="mb-8 max-w-xl text-base leading-relaxed text-white/85 md:text-lg">
+              Discover inspiring events, workshops, and experiences that bring our community together.
+              From tech and design to business and creativity — there&apos;s something for everyone in Nowshera.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <ZoomHover>
+                <Link
+                  to="/events"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#FF7A1A] px-7 py-3 text-sm font-bold text-black transition hover:bg-[#ff8d3a]"
+                >
+                  Explore Events <span aria-hidden="true">→</span>
+                </Link>
+              </ZoomHover>
+              {profile ? (
+                <ZoomHover>
+                  <Link to="/my-registrations" className="rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">
+                    My Registrations
+                  </Link>
+                </ZoomHover>
+              ) : (
+                <ZoomHover>
+                  <Link to="/signup" className="rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">
+                    Create Account
+                  </Link>
+                </ZoomHover>
+              )}
+            </div>
           </div>
-        </div>
-        <div className="hero-art">
-          <img src="/images/nowshera-night.jpg" alt="Nowshera city lights at night" />
-          <div className="art-shade" />
-          <div className="art-orbit" />
-          <div className="art-label">NEXT UP <strong>01</strong></div>
-          <div className="art-date">15<br /><small>OCT</small></div>
-          <div className="art-caption">Nowshera<br /><strong>Tech Meetup</strong></div>
-          <span className="art-coordinate">34°00' N / 72°00' E</span>
+
+          <div className="border-t border-white/15 bg-black/35 backdrop-blur-sm">
+            <div className="container mx-auto grid grid-cols-2 gap-6 px-6 py-6 md:grid-cols-4 md:px-10 lg:px-12">
+              {[
+                { icon: UserGroupIcon, title: 'Community Events', text: 'Meet people who care about the same things.' },
+                { icon: AcademicCapIcon, title: 'Workshops & Learning', text: 'Hands-on sessions you can use the same week.' },
+                { icon: LightBulbIcon, title: 'Industry Experts', text: 'Talks and panels from people building now.' },
+                { icon: MapPinIcon, title: 'Nowshera & Beyond', text: 'Local rooms with a wider horizon.' },
+              ].map(({ icon: Icon, title, text }, index) => (
+                <div
+                  key={title}
+                  className={`flex gap-3 ${index > 0 ? 'md:border-l md:border-white/20 md:pl-6' : ''}`}
+                >
+                  <Icon className="mt-0.5 h-6 w-6 shrink-0 text-[#FF7A1A]" />
+                  <div>
+                    <p className="text-sm font-bold text-white">{title}</p>
+                    <p className="mt-1 text-xs leading-snug text-white/70">{text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="intro-band">
-        <span className="section-index">01 / THE PLATFORM</span>
-        <h2>For the curious,<br /><i>the connected,</i><br />the almost-there.</h2>
-        <p>
+      <section className="container mx-auto flex flex-col items-center px-4 py-16">
+        <Typography variant="h6" className="mb-2 text-center" color="orange">About the platform</Typography>
+        <Typography variant="h3" className="text-center" color="blue-gray">Why Nowshera Events?</Typography>
+        <Typography variant="lead" className="mb-8 mt-2 w-full text-center font-normal !text-gray-500 lg:max-w-4xl">
           Nowshera Events Co. is a professional event registration platform.
           Discover upcoming gatherings, check live availability, and manage your seats without chasing message threads.
-        </p>
-        <Link className="text-link" to="/about">About the platform <span>↗</span></Link>
+        </Typography>
+        <div className="mt-4 grid w-full grid-cols-1 gap-4 md:grid-cols-3">
+          {[
+            { icon: CalendarDaysIcon, title: 'Clear discovery', text: 'Browse a published calendar with dates, locations, and remaining seats in view.' },
+            { icon: TicketIcon, title: 'Simple registration', text: 'Reserve with an account, track status, and cancel when plans change.' },
+            { icon: Squares2X2Icon, title: 'Organizer tools', text: 'Admins can create, publish, and understand attendance from one workspace.' },
+          ].map(({ icon: Icon, title, text }) => (
+            <Card key={title} color="transparent" shadow={false} className="rounded-2xl border border-blue-gray-50 p-6">
+              <Icon className="mb-3 h-8 w-8 text-[#FF7A1A]" />
+              <Typography variant="h5" color="blue-gray" className="mb-2">{title}</Typography>
+              <Typography className="font-normal !text-gray-500">{text}</Typography>
+            </Card>
+          ))}
+        </div>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          <Link to="/about" className="text-sm font-medium text-gray-900">About the platform →</Link>
+          <Link to="/ceo" className="text-sm font-medium text-gray-900">Meet the CEO →</Link>
+        </div>
       </section>
 
-      <section className="home-section">
-        <div className="section-heading">
+      <section className="container mx-auto grid gap-10 px-8 py-16 lg:grid-cols-2 lg:place-items-center">
+        <div>
+          <Typography variant="h6" color="orange" className="mb-6 font-medium">Our Stats</Typography>
+          <Typography className="text-4xl font-bold leading-tight text-blue-gray-900 md:text-5xl">
+            Live calendar highlights
+          </Typography>
+          <Typography variant="lead" className="mt-3 w-full !text-gray-500 lg:w-10/12">
+            Real numbers from published events on the platform — availability updates as people register.
+          </Typography>
+        </div>
+        <div className="grid w-full grid-cols-2 gap-8">
+          <StatsCard count={status === 'ready' ? String(events.length) : '—'} title="Upcoming events" animateCount={status === 'ready'} />
+          <StatsCard count={status === 'ready' ? String(openSpots) : '—'} title="Open seats" animateCount={status === 'ready'} />
+          <StatsCard count="Live" title="Registration" />
+          <StatsCard count="Direct" title="Support" />
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 py-16">
+        <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="eyebrow">Featured events</p>
-            <h2>Coming up next.</h2>
+            <Typography variant="h6" color="orange" className="mb-2">Featured events</Typography>
+            <Typography variant="h3" color="blue-gray">Coming up next.</Typography>
           </div>
-          <Link className="button ghost" to="/events">View all events</Link>
+          <ZoomHover>
+            <Link to="/events"><Button variant="outlined" color="gray">View all events</Button></Link>
+          </ZoomHover>
         </div>
         {status === 'loading' && <div className="event-grid"><EventSkeleton /><EventSkeleton /><EventSkeleton /></div>}
         {status === 'error' && <Notice error>Unable to load featured events. <Link to="/events">Try the full calendar</Link></Notice>}
@@ -427,45 +431,66 @@ function Landing() {
         )}
       </section>
 
-      <section className="feature-strip why-strip">
-        <div><span className="feature-no">01</span><h3>Clear discovery</h3><p>Browse a published calendar with dates, locations, and remaining seats in view.</p></div>
-        <div><span className="feature-no">02</span><h3>Simple registration</h3><p>Reserve with an account, track status, and cancel when plans change.</p></div>
-        <div><span className="feature-no">03</span><h3>Organizer tools</h3><p>Admins can create, publish, and understand attendance from one workspace.</p></div>
+      <section className="relative overflow-hidden bg-black px-6 py-20 md:px-10">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_20%,rgba(255,122,26,0.16),transparent_40%)]" />
+        <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          <FadeIn className="order-2 lg:order-1">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-[#FF7A1A]">
+              Leadership
+            </p>
+            <h2 className="mb-3 text-3xl font-extrabold tracking-tight text-white md:text-5xl">
+              Muhammad Hassaan Khan
+            </h2>
+            <p className="mb-4 text-lg font-medium text-white/90">
+              CEO &amp; Automation Engineer
+            </p>
+            <p className="mb-4 max-w-lg text-base leading-relaxed text-white/70">
+              Building technology. Connecting people. Creating opportunities.
+            </p>
+            <p className="mb-8 max-w-lg text-sm leading-relaxed text-white/60 md:text-base">
+              The driving force behind Nowshera Events — focused on using automation and modern
+              digital systems to help people discover events, connect with communities, and build
+              meaningful opportunities.
+            </p>
+            <ZoomHover>
+              <Link
+                to="/ceo"
+                className="inline-flex items-center gap-2 rounded-full bg-[#FF7A1A] px-7 py-3 text-sm font-bold text-black transition hover:bg-[#ff8d3a]"
+              >
+                Meet the CEO <span aria-hidden="true">→</span>
+              </Link>
+            </ZoomHover>
+          </FadeIn>
+
+          <FadeIn delay={0.1} className="relative order-1 mx-auto w-full max-w-sm lg:order-2 lg:mx-0 lg:max-w-md">
+            <div className="absolute -inset-3 bg-gradient-to-br from-[#FF7A1A]/35 via-transparent to-white/10 blur-2xl" aria-hidden="true" />
+            <img
+              src="/images/ceo-muhammad-hassaan-khan.jpg"
+              alt="Muhammad Hassaan Khan, CEO of Nowshera Events"
+              className="relative z-10 aspect-[4/5] w-full object-cover object-[center_20%] shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
+            />
+          </FadeIn>
+        </div>
       </section>
 
-      <section className="stats-band">
-        <div>
-          <span>Upcoming events</span>
-          <strong>{status === 'ready' ? events.length : '—'}</strong>
-        </div>
-        <div>
-          <span>Open seats</span>
-          <strong>{status === 'ready' ? openSpots : '—'}</strong>
-        </div>
-        <div>
-          <span>Registration</span>
-          <strong>Live</strong>
-        </div>
-        <div>
-          <span>Support</span>
-          <strong>Direct</strong>
-        </div>
-      </section>
-
-      <section className="cta-band">
-        <p className="eyebrow">Ready when you are</p>
-        <h2>Find your next seat.</h2>
-        <p>Explore the calendar, create an account, or message us if you need help.</p>
-        <div className="actions">
-          <Link className="button primary" to="/events">Explore</Link>
-          {profile ? (
-            <Link className="button ghost" to="/my-registrations">My Registrations</Link>
-          ) : (
-            <>
-              <Link className="button ghost" to="/signup">Create Account</Link>
-              <Link className="button ghost" to="/login">Log In</Link>
-            </>
-          )}
+      <section className="bg-blue-gray-50/40 px-4 py-16">
+        <div className="container mx-auto max-w-3xl text-center">
+          <Typography variant="h6" color="orange" className="mb-2">Ready when you are</Typography>
+          <Typography variant="h3" color="blue-gray" className="mb-3">Find your next seat.</Typography>
+          <Typography className="mb-8 font-normal !text-gray-500">
+            Explore the calendar, create an account, or message us if you need help.
+          </Typography>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link to="/events"><Button color="gray">Explore</Button></Link>
+            {profile ? (
+              <Link to="/my-registrations"><Button variant="outlined" color="gray">My Registrations</Button></Link>
+            ) : (
+              <>
+                <Link to="/signup"><Button variant="outlined" color="gray">Create Account</Button></Link>
+                <Link to="/login"><Button variant="text" color="gray">Log In</Button></Link>
+              </>
+            )}
+          </div>
         </div>
       </section>
     </main>
@@ -539,39 +564,6 @@ function Events() {
   );
 }
 
-function EventCard({ event }) {
-  const image = event.title.toLowerCase().includes('tech') ? '/images/event-table.jpg' : '/images/event-gathering.jpg';
-  const closed = event.status !== 'published' || event.available_spots < 1;
-
-  return (
-    <article className="event-card">
-      <div className="card-visual">
-        <img src={image} alt="" />
-        <span className="card-date">
-          <b>{new Date(`${event.event_date}T00:00`).toLocaleDateString('en', { day: '2-digit' })}</b>
-          <span>{new Date(`${event.event_date}T00:00`).toLocaleDateString('en', { month: 'short' })}</span>
-        </span>
-      </div>
-      <div className="card-body">
-        <span className="tag">{event.status}</span>
-        <h2>{event.title}</h2>
-        <p>{event.description || 'An experience designed for curious people.'}</p>
-        <div className="meta">
-          <span>◷ {event.event_time.slice(0, 5)}</span>
-          <span>⌖ {event.location}</span>
-          <span>{event.available_spots} of {event.capacity} spots left</span>
-        </div>
-        <div className="card-actions">
-          <Link className="card-link" to={`/events/${event.id}`}>View details <span>→</span></Link>
-          <Link className={`button ${closed ? 'ghost' : 'primary'} compact`} to={`/events/${event.id}`}>
-            {closed ? 'View status' : 'Register'}
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
-}
-
 function EventDetails() {
   usePageMeta('Event details', 'View event details, availability, and registration options on Nowshera Events Co.');
 
@@ -621,11 +613,18 @@ function EventDetails() {
   return (
     <main className="page detail-page">
       <Link className="back" to="/events">← All events</Link>
+      <div className="mb-6 overflow-hidden rounded-2xl">
+        <img
+          src={eventCoverImage(event)}
+          alt=""
+          className="h-56 w-full object-cover md:h-72"
+        />
+      </div>
       <div className="detail-layout">
         <section>
-          <span className="tag">{event.status}</span>
+          <StatusBadge status={event.status} />
           <h1>{event.title}</h1>
-          <p className="detail-description">{event.description || 'No description provided for this event.'}</p>
+          <p className="detail-description whitespace-pre-line">{event.description || 'No description provided for this event.'}</p>
           <div className="detail-meta">
             <div>
               <small>When</small>
@@ -644,7 +643,7 @@ function EventDetails() {
           {!profile ? (
             <>
               <p>Join the room when it opens.</p>
-              <Link className="button primary full" to="/login">Log in to register</Link>
+              <Link className="button event-cta full" to="/login">Log in to register</Link>
             </>
           ) : registration ? (
             <>
@@ -655,7 +654,7 @@ function EventDetails() {
           ) : (
             <>
               <p>{closed ? (event.status === 'published' ? 'This event is full.' : 'Registration is closed.') : 'Ready when you are.'}</p>
-              <button className="button primary full" type="button" disabled={closed || busy} onClick={register}>
+              <button className="button event-cta full" type="button" disabled={closed || busy} onClick={register}>
                 {busy ? 'Reserving...' : closed ? 'Registration closed' : 'Register now'}
               </button>
             </>
@@ -742,56 +741,192 @@ function AuthForm({ mode }) {
   };
 
   return (
-    <main className="auth-page">
-      <div className="auth-panel">
-        <p className="eyebrow">Nowshera Events Co.</p>
-        <h1>{signup ? 'Make yourself at home.' : 'Welcome back.'}</h1>
-        <p>{signup ? 'Create an account to keep your plans close.' : 'Pick up where you left off.'}</p>
-        {error && <Notice error>{error}</Notice>}
-        {message && <Notice>{message}</Notice>}
-        <form onSubmit={submit} noValidate>
-          {signup && (
-            <Field
-              label="Full name"
-              value={data.full_name}
-              onChange={v => setData({ ...data, full_name: v })}
-              error={fieldErrors.full_name}
-              autoComplete="name"
-            />
-          )}
-          <Field
-            label="Email address"
-            type="email"
-            value={data.email}
-            onChange={v => setData({ ...data, email: v })}
-            error={fieldErrors.email}
-            autoComplete="email"
-          />
-          <PasswordField
-            label="Password"
-            value={data.password}
-            onChange={v => setData({ ...data, password: v })}
-            error={fieldErrors.password}
-            autoComplete={signup ? 'new-password' : 'current-password'}
-          />
-          {signup && (
-            <PasswordField
-              label="Confirm password"
-              value={data.confirm_password}
-              onChange={v => setData({ ...data, confirm_password: v })}
-              error={fieldErrors.confirm_password}
-              autoComplete="new-password"
-            />
-          )}
-          {!signup && <Link className="form-help" to="/forgot-password">Forgot your password?</Link>}
-          <button className="button primary full" disabled={busy}>{busy ? 'Please wait...' : signup ? 'Create account' : 'Log in'}</button>
-        </form>
-        <p className="switch">
-          {signup ? 'Already have an account?' : 'New here?'}{' '}
-          <Link to={signup ? '/login' : '/signup'}>{signup ? 'Log in' : 'Create an account'}</Link>
-        </p>
+    <main className="hero-mt auth-shell relative min-h-screen w-full overflow-hidden bg-[url('/images/auth-nowshera-events.jpg')] bg-cover bg-center bg-no-repeat">
+      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/55" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/50" />
+
+      <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-7xl items-center gap-10 px-6 pb-16 pt-28 md:px-10 lg:grid-cols-2 lg:gap-14 lg:px-12">
+        <FadeIn className="max-w-xl lg:block">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-white/90 lg:mb-4">
+            Nowshera Events
+          </p>
+          <h2 className="mb-3 text-4xl font-extrabold leading-[0.98] tracking-tight text-white sm:text-5xl lg:mb-4 xl:text-6xl">
+            Join the{' '}
+            <span className="text-[#FF7A1A]">Community</span>
+          </h2>
+          <p className="mb-6 max-w-md text-base leading-relaxed text-white/75 md:text-lg lg:mb-10">
+            Discover events, connect with people, and be part of something bigger.
+          </p>
+          <div className="mb-2 flex flex-wrap gap-6 lg:mb-0 lg:gap-8">
+            {[
+              { icon: CalendarDaysIcon, label: 'Events' },
+              { icon: UserGroupIcon, label: 'Community' },
+              { icon: LightBulbIcon, label: 'Opportunities' },
+            ].map(({ icon: Icon, label }) => (
+              <div key={label} className="flex flex-col items-center gap-2 text-center">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[#FF7A1A]/70 text-[#FF7A1A] lg:h-12 lg:w-12">
+                  <Icon className="h-5 w-5 lg:h-6 lg:w-6" />
+                </span>
+                <span className="text-xs font-medium tracking-wide text-white/80">{label}</span>
+              </div>
+            ))}
+          </div>
+        </FadeIn>
+
+        <FadeIn delay={0.08} className="mx-auto w-full max-w-md lg:mx-0 lg:justify-self-end">
+          <div className="auth-glass rounded-3xl border border-[#FF7A1A]/35 bg-black/55 p-7 shadow-[0_0_40px_rgba(255,122,26,0.12)] backdrop-blur-xl md:p-9">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#FF7A1A]">
+              {signup ? 'Create account' : 'Log in'}
+            </p>
+            <h1 className="mb-2 text-3xl font-bold tracking-tight text-white md:text-[2rem]">
+              {signup ? 'Sign up to Nowshera Events' : 'Welcome back.'}
+            </h1>
+            <p className="mb-6 text-sm text-white/60">
+              {signup ? 'Create an account to keep your plans close.' : 'Pick up where you left off.'}
+            </p>
+
+            {error && <Notice error>{error}</Notice>}
+            {message && <Notice>{message}</Notice>}
+
+            <form onSubmit={submit} noValidate className="space-y-4">
+              {signup && (
+                <AuthField
+                  label="Full name"
+                  icon={UserIcon}
+                  value={data.full_name}
+                  onChange={v => setData({ ...data, full_name: v })}
+                  error={fieldErrors.full_name}
+                  autoComplete="name"
+                />
+              )}
+              <AuthField
+                label="Email address"
+                type="email"
+                icon={EnvelopeIcon}
+                value={data.email}
+                onChange={v => setData({ ...data, email: v })}
+                error={fieldErrors.email}
+                autoComplete="email"
+              />
+              <AuthPasswordField
+                label="Password"
+                value={data.password}
+                onChange={v => setData({ ...data, password: v })}
+                error={fieldErrors.password}
+                autoComplete={signup ? 'new-password' : 'current-password'}
+              />
+              {signup && (
+                <AuthPasswordField
+                  label="Confirm password"
+                  value={data.confirm_password}
+                  onChange={v => setData({ ...data, confirm_password: v })}
+                  error={fieldErrors.confirm_password}
+                  autoComplete="new-password"
+                />
+              )}
+              {!signup && (
+                <Link className="auth-help" to="/forgot-password">Forgot your password?</Link>
+              )}
+              <ZoomHover className="w-full">
+                <button className="auth-submit" disabled={busy} type="submit">
+                  {busy ? 'Please wait...' : signup ? 'Create Account' : 'Log In'}
+                  {!busy && <span aria-hidden="true">→</span>}
+                </button>
+              </ZoomHover>
+            </form>
+
+            <div className="auth-divider">
+              <span>Or continue with</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <a
+                className="auth-social"
+                href={SITE_CONTACT.WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img src="/icons/whatsapp.jpg" alt="" width="18" height="18" className="rounded-sm object-cover" />
+                WhatsApp
+              </a>
+              <a
+                className="auth-social"
+                href={SITE_CONTACT.GMAIL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img src="/icons/gmail.jpg" alt="" width="18" height="18" className="rounded-sm object-cover" />
+                Google
+              </a>
+            </div>
+
+            <p className="mt-6 text-center text-sm text-white/55">
+              {signup ? 'Already have an account?' : 'New here?'}{' '}
+              <Link
+                to={signup ? '/login' : '/signup'}
+                className="font-semibold text-[#FF7A1A] hover:text-[#ff8d3a]"
+              >
+                {signup ? 'Log in' : 'Create an account'}
+              </Link>
+            </p>
+          </div>
+        </FadeIn>
       </div>
     </main>
+  );
+}
+
+function AuthField({ label, type = 'text', value, onChange, error, autoComplete, disabled, icon: Icon }) {
+  return (
+    <label className="auth-field">
+      <span className="sr-only">{label}</span>
+      <span className="auth-field-shell">
+        {Icon && <Icon className="auth-field-icon" aria-hidden="true" />}
+        <input
+          required
+          type={type}
+          value={value}
+          disabled={disabled}
+          placeholder={label}
+          autoComplete={autoComplete}
+          aria-label={label}
+          aria-invalid={Boolean(error)}
+          onChange={e => onChange(e.target.value)}
+        />
+      </span>
+      {error && <em className="auth-field-error">{error}</em>}
+    </label>
+  );
+}
+
+function AuthPasswordField({ label, value, onChange, error, autoComplete }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <label className="auth-field">
+      <span className="sr-only">{label}</span>
+      <span className="auth-field-shell">
+        <LockClosedIcon className="auth-field-icon" aria-hidden="true" />
+        <input
+          required
+          type={visible ? 'text' : 'password'}
+          value={value}
+          placeholder={label}
+          autoComplete={autoComplete}
+          aria-label={label}
+          aria-invalid={Boolean(error)}
+          onChange={e => onChange(e.target.value)}
+        />
+        <button
+          className="auth-password-toggle"
+          type="button"
+          onClick={() => setVisible(current => !current)}
+          aria-label={visible ? 'Hide password' : 'Show password'}
+        >
+          {visible ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+        </button>
+      </span>
+      {error && <em className="auth-field-error">{error}</em>}
+    </label>
   );
 }
 
@@ -919,7 +1054,7 @@ function AdminLogin() {
   return (
     <main className="auth-page">
       <div className="auth-panel">
-        <p className="eyebrow">Administrator access</p>
+        <p className="eyebrow inline-icon"><Icons.Shield size={14} /> Administrator access</p>
         <h1>Admin Login</h1>
         <p>Sign in with an authorized organizer account to manage events.</p>
         {error && <Notice error>{error}</Notice>}
@@ -1504,7 +1639,7 @@ function Dashboard() {
             {metrics.map(([label, value]) => (
               <div className="metric" key={label}>
                 <span>{label}</span>
-                <AnimatedCounter value={Number(value) || 0} />
+                <CountUp value={Number(value) || 0} />
               </div>
             ))}
           </div>
@@ -1549,7 +1684,7 @@ function Dashboard() {
                     </td>
                     <td>{e.event_date}{e.event_time ? ` · ${String(e.event_time).slice(0, 5)}` : ''}</td>
                     <td>{e.active_registrations} / {e.capacity}</td>
-                    <td><span className="tag">{e.status}</span></td>
+                    <td><StatusBadge status={e.status} /></td>
                     <td className="table-actions">
                       <Link className="button ghost compact" to={`/admin/events/${e.id}/edit`}>Edit</Link>
                       <Link className="button ghost compact" to={`/admin/events/${e.id}/attendees`}>View Attendees</Link>
@@ -1934,7 +2069,7 @@ function AdminEventView() {
     <Page eyebrow="Admin event view" title={event.title} action={<Link className="button primary" to={`/admin/events/${id}/edit`}>Edit event</Link>}>
       <div className="detail-layout">
         <section>
-          <span className="tag">{event.status}</span>
+          <StatusBadge status={event.status} />
           <p className="detail-description">{event.description || 'No description provided.'}</p>
           <div className="detail-meta">
             <div><small>Date</small><strong>{event.event_date}</strong></div>
@@ -1990,7 +2125,7 @@ function Reports() {
 function Empty({ title, text, action }) {
   return (
     <div className="empty">
-      <div className="empty-mark">○</div>
+      <div className="empty-mark" aria-hidden="true"><Icons.Calendar size={28} /></div>
       <h2>{title}</h2>
       <p>{text}</p>
       {action}

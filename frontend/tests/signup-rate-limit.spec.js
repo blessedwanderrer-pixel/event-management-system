@@ -31,7 +31,7 @@ test('signup rate-limit notice does not leak across independent browser sessions
   await expect(pageA.getByText(RATE_LIMIT_DETAIL)).toBeVisible();
 
   await pageB.goto('/signup');
-  await expect(pageB.getByRole('heading', { name: 'Make yourself at home.' })).toBeVisible();
+  await expect(pageB.getByRole('heading', { name: 'Sign up to Nowshera Events' })).toBeVisible();
   await expect(pageB.getByText(RATE_LIMIT_DETAIL)).toHaveCount(0);
   await expect(pageB.getByText(/rate-limited|Too many attempts/i)).toHaveCount(0);
 
@@ -72,7 +72,7 @@ test('signup clears transient rate-limit error on refresh and navigation', async
   await expect(page.getByText(RATE_LIMIT_DETAIL)).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Make yourself at home.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign up to Nowshera Events' })).toBeVisible();
   await expect(page.getByText(RATE_LIMIT_DETAIL)).toHaveCount(0);
 
   await page.route('**/auth/signup', async (route) => {
@@ -88,6 +88,6 @@ test('signup clears transient rate-limit error on refresh and navigation', async
 
   await page.goto('/about');
   await page.goto('/signup');
-  await expect(page.getByRole('heading', { name: 'Make yourself at home.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign up to Nowshera Events' })).toBeVisible();
   await expect(page.getByText(RATE_LIMIT_DETAIL)).toHaveCount(0);
 });

@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test';
 
 const publicRoutes = [
-  ['/', 'Make room for'],
+  ['/', 'Nowshera Events'],
   ['/about', 'Built for real gatherings.'],
+  ['/ceo', 'Muhammad Hassaan Khan'],
   ['/contact', 'We are easy to reach.'],
   ['/faq', 'Answers, kept short.'],
   ['/privacy-policy', 'Privacy Policy'],
   ['/terms', 'Terms & Conditions'],
   ['/login', 'Welcome back.'],
-  ['/signup', 'Make yourself at home.'],
+  ['/signup', 'Sign up to Nowshera Events'],
   ['/admin/login', 'Admin Login'],
   ['/forgot-password', 'Find your way back.'],
   ['/reset-password', 'Choose a new password.'],
@@ -21,7 +22,7 @@ const publicRoutes = [
 for (const [route, heading] of publicRoutes) {
   test(`renders ${route}`, async ({ page }) => {
     await page.goto(route);
-    await expect(page.getByRole('heading', { name: heading })).toBeVisible();
+    await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
   });
 }
 
@@ -44,10 +45,10 @@ test('admin entry route redirects unauthenticated users to login', async ({ page
 
 test('event discovery loads live event data', async ({ page }) => {
   await page.goto('/events');
-  await expect(page.getByRole('heading', { name: 'Nowshera Tech Meetup' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Nowshera Tech Meetup' }).first()).toBeVisible();
   await expect(page.getByText(/spots left/).first()).toBeVisible();
   await page.getByRole('combobox', { name: 'Filter by status' }).selectOption('published');
-  await expect(page.getByRole('heading', { name: 'Nowshera Tech Meetup' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Nowshera Tech Meetup' }).first()).toBeVisible();
 });
 
 test('mobile navigation has no horizontal overflow', async ({ page }) => {

@@ -1,5 +1,15 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Accordion,
+  AccordionBody,
+  AccordionHeader,
+  Button,
+  Card,
+  CardBody,
+  Typography,
+} from '@material-tailwind/react';
+import { FadeIn, ZoomHover } from '../components/Motion';
 import { usePageMeta } from '../seo';
 
 const WHATSAPP_URL = 'https://wa.me/923172727299';
@@ -11,6 +21,7 @@ const GMAIL_URL = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComp
 export function ContactActionButtons({ className = '', compact = false }) {
   return (
     <div className={`contact-action-buttons ${compact ? 'compact' : ''} ${className}`.trim()}>
+      <ZoomHover>
       <a
         className="button contact-whatsapp"
         href={WHATSAPP_URL}
@@ -18,9 +29,11 @@ export function ContactActionButtons({ className = '', compact = false }) {
         rel="noopener noreferrer"
         aria-label={`Chat on WhatsApp ${WHATSAPP_DISPLAY}`}
       >
-        <img className="contact-icon-img" src="/icons/whatsapp.jpg" alt="" width="20" height="20" />
+          <img className="contact-icon-img" src="/icons/whatsapp.jpg" alt="" width="20" height="20" />
         WhatsApp
       </a>
+      </ZoomHover>
+      <ZoomHover>
       <a
         className="button contact-gmail"
         href={GMAIL_URL}
@@ -28,9 +41,10 @@ export function ContactActionButtons({ className = '', compact = false }) {
         rel="noopener noreferrer"
         aria-label={`Email via Gmail ${EMAIL}`}
       >
-        <img className="contact-icon-img" src="/icons/gmail.jpg" alt="" width="20" height="20" />
+          <img className="contact-icon-img" src="/icons/gmail.jpg" alt="" width="20" height="20" />
         Gmail
       </a>
+      </ZoomHover>
     </div>
   );
 }
@@ -45,58 +59,254 @@ export function AboutPage() {
     <main className="page prose-page">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">About us</p>
-          <h1>Built for real gatherings.</h1>
+          <Typography variant="h6" color="orange" className="eyebrow !normal-case !tracking-normal">About us</Typography>
+          <Typography variant="h1" color="blue-gray">Built for real gatherings.</Typography>
         </div>
       </div>
 
       <section className="prose-block">
-        <h2>Who we are</h2>
-        <p>
+        <Typography variant="h4" color="blue-gray" className="mb-2">Who we are</Typography>
+        <Typography className="font-normal !text-gray-600">
           Nowshera Events Co. is a local event registration and management platform.
           We help organizers publish clear event details and help attendees discover,
           reserve, and manage seats without friction.
-        </p>
+        </Typography>
       </section>
 
       <section className="prose-block">
-        <h2>What we do</h2>
-        <p>
+        <Typography variant="h4" color="blue-gray" className="mb-2">What we do</Typography>
+        <Typography className="font-normal !text-gray-600">
           We provide a shared calendar for upcoming events, simple account-based
           registration, and admin tools for creating, publishing, and tracking attendance.
           The focus is operational clarity: dates, capacity, availability, and reliable status updates.
-        </p>
+        </Typography>
       </section>
 
       <div className="mission-grid">
-        <section className="prose-card">
-          <p className="eyebrow">Mission</p>
-          <h2>Make event registration dependable.</h2>
-          <p>
+        <FadeIn>
+          <Card className="border border-blue-gray-50 shadow-sm">
+            <CardBody>
+              <Typography variant="h6" color="orange" className="mb-2">Mission</Typography>
+              <Typography variant="h4" color="blue-gray" className="mb-2">Make event registration dependable.</Typography>
+              <Typography className="font-normal !text-gray-600">
             Give attendees a trustworthy place to find events and reserve seats, while
             giving organizers tools that respect capacity and keep records accurate.
-          </p>
-        </section>
-        <section className="prose-card">
-          <p className="eyebrow">Vision</p>
-          <h2>Keep community events easy to join.</h2>
-          <p>
+              </Typography>
+            </CardBody>
+          </Card>
+        </FadeIn>
+        <FadeIn delay={0.1}>
+          <Card className="border border-blue-gray-50 shadow-sm">
+            <CardBody>
+              <Typography variant="h6" color="orange" className="mb-2">Vision</Typography>
+              <Typography variant="h4" color="blue-gray" className="mb-2">Keep community events easy to join.</Typography>
+              <Typography className="font-normal !text-gray-600">
             A calm, professional platform where local gatherings stay discoverable,
             registration stays fair, and everyone knows where they stand.
-          </p>
-        </section>
+              </Typography>
+            </CardBody>
+          </Card>
+        </FadeIn>
       </div>
 
       <section className="prose-block">
-        <h2>Why this platform exists</h2>
-        <p>
+        <Typography variant="h4" color="blue-gray" className="mb-2">Why this platform exists</Typography>
+        <Typography className="font-normal !text-gray-600">
           Events fall apart when details are scattered and seat counts are unclear.
           This platform exists to keep discovery, registration, and administration in one
           place—so organizers can publish with confidence and attendees can plan with certainty.
-        </p>
-        <div className="actions" style={{ marginTop: 28 }}>
-          <Link className="button primary" to="/events">Browse events</Link>
-          <Link className="button ghost" to="/contact">Contact us</Link>
+        </Typography>
+        <div className="actions mt-7">
+          <Link to="/events"><Button color="gray">Browse events</Button></Link>
+          <Link to="/contact"><Button variant="outlined" color="gray">Contact us</Button></Link>
+          <Link to="/ceo"><Button variant="text" color="orange">Meet the CEO</Button></Link>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+export function CeoPage() {
+  usePageMeta(
+    'Muhammad Hassaan Khan · CEO',
+    'Meet Muhammad Hassaan Khan, CEO of Nowshera Events and Automation Engineer building technology-driven community experiences.',
+  );
+
+  const focusAreas = [
+    {
+      title: 'Automation & Technology',
+      text: 'Using modern technology and automation to simplify processes and create smarter digital experiences.',
+    },
+    {
+      title: 'Community Building',
+      text: 'Connecting students, professionals, entrepreneurs, creators, and organizations through meaningful events.',
+    },
+    {
+      title: 'Innovation',
+      text: 'Encouraging new ideas and creating opportunities for people to showcase what they are building.',
+    },
+    {
+      title: 'Digital Experiences',
+      text: 'Bringing a modern, premium digital experience to the way people discover and participate in events.',
+    },
+  ];
+
+  const ecosystem = [
+    'People connect',
+    'Ideas are shared',
+    'Skills are developed',
+    'Businesses grow',
+    'Communities become stronger',
+  ];
+
+  return (
+    <main>
+      <section className="hero-mt relative min-h-screen w-full overflow-hidden bg-black">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(255,122,26,0.18),transparent_45%),radial-gradient(ellipse_at_90%_10%,rgba(255,255,255,0.06),transparent_35%)]" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-[#FF7A1A]/15 to-transparent" />
+
+        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center gap-10 px-6 pb-16 pt-28 md:px-10 lg:grid lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-12">
+          <FadeIn className="max-w-xl">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-[#FF7A1A]">
+              Nowshera Events
+            </p>
+            <h1 className="mb-3 text-4xl font-extrabold leading-[0.98] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
+              Muhammad Hassaan Khan
+            </h1>
+            <p className="mb-5 text-lg font-medium text-white/90 md:text-xl">
+              CEO &amp; Automation Engineer
+            </p>
+            <p className="mb-8 max-w-md text-base leading-relaxed text-white/70 md:text-lg">
+              Building technology. Connecting people. Creating opportunities.
+            </p>
+            <a
+              href="#about"
+              className="inline-flex items-center gap-2 rounded-full bg-[#FF7A1A] px-7 py-3 text-sm font-bold text-black transition hover:bg-[#ff8d3a]"
+            >
+              About CEO <span aria-hidden="true">↓</span>
+            </a>
+          </FadeIn>
+
+          <FadeIn delay={0.12} className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none">
+            <div className="absolute -inset-3 rounded-[2rem] bg-gradient-to-br from-[#FF7A1A]/40 via-transparent to-white/10 blur-2xl" aria-hidden="true" />
+            <img
+              src="/images/ceo-muhammad-hassaan-khan.jpg"
+              alt="Muhammad Hassaan Khan, CEO of Nowshera Events"
+              className="relative z-10 aspect-[4/5] w-full object-cover object-[center_20%] shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
+            />
+          </FadeIn>
+        </div>
+      </section>
+
+      <section id="about" className="scroll-mt-24 border-b border-blue-gray-50 bg-white px-6 py-20 md:px-10">
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[7rem_1fr] lg:gap-14">
+          <FadeIn>
+            <p className="text-sm font-semibold tracking-[0.2em] text-[#FF7A1A]">01 — About</p>
+          </FadeIn>
+          <FadeIn delay={0.08}>
+            <h2 className="mb-5 text-3xl font-bold tracking-tight text-blue-gray-900 md:text-4xl">
+              Short biography
+            </h2>
+            <p className="max-w-3xl text-base leading-relaxed text-gray-600 md:text-lg">
+              Muhammad Hassaan Khan is the CEO of Nowshera Events and an Automation Engineer
+              focused on using technology, automation, and modern digital systems to create
+              better experiences and more efficient ways of working.
+            </p>
+            <p className="mt-4 max-w-3xl text-base leading-relaxed text-gray-600 md:text-lg">
+              As the driving force behind Nowshera Events, his vision is to create a platform
+              where people can discover events, connect with communities, share ideas, and
+              build meaningful opportunities.
+            </p>
+          </FadeIn>
+        </div>
+      </section>
+
+      <section className="border-b border-blue-gray-50 bg-[#0a0a0a] px-6 py-20 text-white md:px-10">
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[7rem_1fr] lg:gap-14">
+          <FadeIn>
+            <p className="text-sm font-semibold tracking-[0.2em] text-[#FF7A1A]">02 — Engineering</p>
+          </FadeIn>
+          <FadeIn delay={0.08}>
+            <h2 className="mb-5 text-3xl font-bold tracking-tight md:text-4xl">
+              Engineering meets community
+            </h2>
+            <p className="max-w-3xl text-base leading-relaxed text-white/75 md:text-lg">
+              With a background in automation engineering, Muhammad Hassaan Khan brings a
+              technology-first mindset to event management. His approach combines automation,
+              digital innovation, and community building to make events more accessible and engaging.
+            </p>
+            <p className="mt-6 max-w-3xl text-base leading-relaxed text-white/75 md:text-lg">
+              At Nowshera Events, the goal isn&apos;t simply to organize events. It&apos;s to build
+              a growing ecosystem where:
+            </p>
+            <ul className="mt-6 grid max-w-3xl gap-3 sm:grid-cols-2">
+              {ecosystem.map((item) => (
+                <li key={item} className="flex items-start gap-3 text-sm font-medium text-white/90 md:text-base">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF7A1A]" aria-hidden="true" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </FadeIn>
+        </div>
+      </section>
+
+      <section className="border-b border-blue-gray-50 bg-white px-6 py-20 md:px-10">
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[7rem_1fr] lg:gap-14">
+          <FadeIn>
+            <p className="text-sm font-semibold tracking-[0.2em] text-[#FF7A1A]">03 — Vision</p>
+          </FadeIn>
+          <FadeIn delay={0.08}>
+            <h2 className="mb-5 text-3xl font-bold tracking-tight text-blue-gray-900 md:text-4xl">
+              The future of Nowshera Events
+            </h2>
+            <blockquote className="mb-6 max-w-3xl border-l-4 border-[#FF7A1A] pl-5 text-2xl font-semibold leading-snug text-blue-gray-900 md:text-3xl">
+              Create a place where every event becomes an opportunity to connect, learn, and grow.
+            </blockquote>
+            <p className="max-w-3xl text-base leading-relaxed text-gray-600 md:text-lg">
+              Muhammad Hassaan Khan envisions Nowshera Events as more than an event-listing
+              platform. It is designed to become a digital community hub for Nowshera and beyond,
+              bringing together technology, business, creativity, education, and networking.
+            </p>
+          </FadeIn>
+        </div>
+      </section>
+
+      <section className="bg-white px-6 py-20 md:px-10">
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[7rem_1fr] lg:gap-14">
+          <FadeIn>
+            <p className="text-sm font-semibold tracking-[0.2em] text-[#FF7A1A]">04 — Mission</p>
+          </FadeIn>
+          <FadeIn delay={0.08}>
+            <h2 className="mb-3 text-3xl font-bold tracking-tight text-blue-gray-900 md:text-4xl">
+              Connect · Learn · Grow
+            </h2>
+            <p className="mb-10 max-w-3xl text-base leading-relaxed text-gray-600 md:text-lg">
+              Areas of focus guiding the work behind Nowshera Events.
+            </p>
+            <div className="grid gap-8 sm:grid-cols-2">
+              {focusAreas.map((area, index) => (
+                <FadeIn key={area.title} delay={0.05 * index}>
+                  <h3 className="mb-2 text-lg font-bold text-blue-gray-900">{area.title}</h3>
+                  <p className="text-sm leading-relaxed text-gray-600 md:text-base">{area.text}</p>
+                </FadeIn>
+              ))}
+            </div>
+            <div className="mt-12 flex flex-wrap gap-3">
+              <Link
+                to="/events"
+                className="inline-flex items-center gap-2 rounded-full bg-[#FF7A1A] px-7 py-3 text-sm font-bold text-black transition hover:bg-[#ff8d3a]"
+              >
+                Explore Events <span aria-hidden="true">→</span>
+              </Link>
+              <Link
+                to="/contact"
+                className="inline-flex items-center rounded-full border border-blue-gray-200 px-6 py-3 text-sm font-semibold text-blue-gray-900 hover:border-blue-gray-400"
+              >
+                Contact
+              </Link>
+            </div>
+          </FadeIn>
         </div>
       </section>
     </main>
@@ -152,29 +362,32 @@ export function ContactPage() {
     <main className="page prose-page">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">Contact</p>
-          <h1>We are easy to reach.</h1>
+          <Typography variant="h6" color="orange">Contact</Typography>
+          <Typography variant="h1" color="blue-gray">We are easy to reach.</Typography>
         </div>
       </div>
 
       <div className="contact-layout">
-        <section className="contact-panel">
-          <p className="eyebrow">Direct lines</p>
-          <h2>Prefer a quick conversation?</h2>
-          <p>Use WhatsApp or email and we will get back to you as soon as we can.</p>
-          <div className="contact-actions">
+        <Card className="border border-blue-gray-50 shadow-sm">
+          <CardBody>
+            <Typography variant="h6" color="orange" className="mb-2">Direct lines</Typography>
+            <Typography variant="h4" color="blue-gray" className="mb-2">Prefer a quick conversation?</Typography>
+            <Typography className="mb-4 font-normal !text-gray-600">
+              Use WhatsApp or email and we will get back to you as soon as we can.
+            </Typography>
             <ContactActionButtons />
-            <p className="contact-hint">WhatsApp opens a chat. Gmail opens a new email to {EMAIL}.</p>
-          </div>
+            <Typography className="contact-hint mt-3">WhatsApp opens a chat. Gmail opens a new email to {EMAIL}.</Typography>
           <ul className="contact-list">
             <li><span>WhatsApp</span><strong>{WHATSAPP_DISPLAY}</strong></li>
             <li><span>Email</span><strong>{EMAIL}</strong></li>
           </ul>
-        </section>
+          </CardBody>
+        </Card>
 
-        <section className="form-card wide contact-form-card">
-          <p className="eyebrow">Message form</p>
-          <h2>Send a note</h2>
+        <Card className="border border-blue-gray-50 shadow-sm">
+          <CardBody>
+            <Typography variant="h6" color="orange" className="mb-2">Message form</Typography>
+            <Typography variant="h4" color="blue-gray" className="mb-4">Send a note</Typography>
           {status && <div className={status.kind === 'error' ? 'notice error' : 'notice'}>{status.text}</div>}
           <form onSubmit={submit} noValidate>
             <label className="field">
@@ -197,9 +410,10 @@ export function ContactPage() {
               <textarea value={form.message} onChange={e => set('message', e.target.value)} required />
               {errors.message && <em className="field-error">{errors.message}</em>}
             </label>
-            <button className="button primary" type="submit">Send message</button>
+              <Button type="submit" color="gray">Send message</Button>
           </form>
-        </section>
+          </CardBody>
+        </Card>
       </div>
     </main>
   );
@@ -246,34 +460,29 @@ export function FaqPage() {
     },
   ]), []);
 
-  const [open, setOpen] = useState(0);
+  const [open, setOpen] = useState(1);
 
   return (
     <main className="page prose-page">
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">FAQ</p>
-          <h1>Answers, kept short.</h1>
-        </div>
+      <div className="mb-10 text-center">
+        <Typography variant="h1" color="blue-gray" className="mb-4">Answers, kept short.</Typography>
+        <Typography variant="lead" className="mx-auto max-w-2xl !text-gray-500">
+          Common questions about accounts, discovery, registration, and support.
+        </Typography>
       </div>
-      <div className="faq-list">
-        {items.map((item, index) => {
-          const isOpen = open === index;
-          return (
-            <div className={`faq-item ${isOpen ? 'open' : ''}`} key={item.q}>
-              <button
-                type="button"
-                className="faq-trigger"
-                aria-expanded={isOpen}
-                onClick={() => setOpen(isOpen ? -1 : index)}
-              >
-                <span>{item.q}</span>
-                <span aria-hidden="true">{isOpen ? '−' : '+'}</span>
-              </button>
-              {isOpen && <div className="faq-panel"><p>{item.a}</p></div>}
-            </div>
-          );
-        })}
+      <div className="mx-auto max-w-screen-md">
+        {items.map((item, key) => (
+          <Accordion
+            key={item.q}
+            open={open === key + 1}
+            onClick={() => setOpen(open === key + 1 ? 0 : key + 1)}
+          >
+            <AccordionHeader className="text-left text-gray-900">{item.q}</AccordionHeader>
+            <AccordionBody>
+              <Typography color="blue-gray" className="font-normal text-gray-500">{item.a}</Typography>
+            </AccordionBody>
+          </Accordion>
+        ))}
       </div>
     </main>
   );
@@ -289,8 +498,8 @@ export function PrivacyPage() {
     <main className="page prose-page legal-page">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">Legal</p>
-          <h1>Privacy Policy</h1>
+          <Typography variant="h6" color="orange">Legal</Typography>
+          <Typography variant="h1" color="blue-gray">Privacy Policy</Typography>
         </div>
       </div>
       <p className="legal-lede">Last updated: September 2026. This policy explains how Nowshera Events Co. handles information on this event registration website.</p>
@@ -320,8 +529,8 @@ export function TermsPage() {
     <main className="page prose-page legal-page">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">Legal</p>
-          <h1>Terms &amp; Conditions</h1>
+          <Typography variant="h6" color="orange">Legal</Typography>
+          <Typography variant="h1" color="blue-gray">Terms &amp; Conditions</Typography>
         </div>
       </div>
       <p className="legal-lede">Last updated: September 2026. By using Nowshera Events Co., you agree to these terms.</p>

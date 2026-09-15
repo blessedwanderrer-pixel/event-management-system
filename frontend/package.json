@@ -10,14 +10,25 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@material-tailwind/react": "^2.1.2",
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "react-router-dom": "latest"
+    "lucide-react": "^1.46.0",
+    "motion": "^13.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "latest",
+    "vite": "latest"
   },
   "devDependencies": {
     "@playwright/test": "latest",
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.19",
     "vitest": "latest"
+  },
+  "overrides": {
+    "react": "$react",
+    "react-dom": "$react-dom"
   }
 }
