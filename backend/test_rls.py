@@ -425,7 +425,7 @@ def main() -> None:
     attendee_a_email = "attendee.a@test.example"
     attendee_b_email = "attendee.b@test.example"
     admin_email = "admin.test@example.com"
-    password = getpass.getpass("Enter the shared test password: ")
+    password = os.getenv("RLS_TEST_PASSWORD") or getpass.getpass("Enter the shared test password: ")
     attendee_a = test_attendee(attendee_a_email, password)
     attendee_b = test_attendee(attendee_b_email, password)
     fixture = create_registration_fixture(attendee_b, attendee_b_email, password, admin_email)

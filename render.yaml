@@ -15,7 +15,11 @@ services:
         sync: false
       - key: FRONTEND_ORIGINS
         sync: false
+      - key: PUBLIC_APP_URL
+        sync: false
       - key: AUTH_CONFIRMATION_REDIRECT_URL
         sync: false
       - key: PASSWORD_RESET_REDIRECT_URL
+        sync: false
+      - key: EMAIL_CHANGE_REDIRECT_URL
         sync: false

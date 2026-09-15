@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -17,6 +19,7 @@ def get_profile(profile: Profile = Depends(get_current_profile)):
 @router.patch("/me", response_model=ProfileResponse)
 def update_profile(data: ProfileUpdate, profile: Profile = Depends(get_current_profile), db: Session = Depends(get_db)):
     profile.full_name = data.full_name.strip()
+    profile.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(profile)
     return profile

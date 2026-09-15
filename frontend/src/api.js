@@ -1,7 +1,43 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+import { clearSession, getAccessToken, getRefreshToken, saveSession } from './session';
 
-export async function request(path, options = {}) {
-  const token = localStorage.getItem('access_token');
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const API_URL = configuredApiUrl
+  || (import.meta.env.DEV ? 'http://127.0.0.1:8001' : '/api');
+
+let refreshInFlight = null;
+
+async function refreshSession() {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+  if (!refreshInFlight) {
+    refreshInFlight = fetch(`${API_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    })
+      .then(async (response) => {
+        let payload = null;
+        try { payload = await response.json(); } catch { payload = null; }
+        if (!response.ok || !payload?.session?.access_token) {
+          clearSession();
+          return false;
+        }
+        saveSession(payload.session);
+        return true;
+      })
+      .catch(() => {
+        clearSession();
+        return false;
+      })
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+  return refreshInFlight;
+}
+
+export async function request(path, options = {}, allowRefresh = true) {
+  const token = getAccessToken();
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
@@ -12,6 +48,10 @@ export async function request(path, options = {}) {
   });
   let payload = null;
   try { payload = await response.json(); } catch { payload = null; }
+  if (response.status === 401 && allowRefresh && path !== '/auth/refresh' && path !== '/auth/login') {
+    const refreshed = await refreshSession();
+    if (refreshed) return request(path, options, false);
+  }
   if (!response.ok) {
     const detail = payload?.detail;
     throw new Error(typeof detail === 'string' ? detail : 'Something went wrong. Please try again.');
@@ -30,6 +70,10 @@ export const api = {
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
   }),
+  verifyToken: (data) => request('/auth/verify', { method: 'POST', body: JSON.stringify(data) }),
+  changePassword: (data) => request('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
+  changeEmail: (data) => request('/auth/change-email', { method: 'POST', body: JSON.stringify(data) }),
+  logout: () => request('/auth/logout', { method: 'POST' }).catch(() => ({ message: 'Logged out' })),
   me: () => request('/auth/me'),
   registrations: () => request('/registrations/me'),
   register: (eventId) => request(`/registrations?event_id=${eventId}`, { method: 'POST' }),
@@ -41,6 +85,6 @@ export const api = {
   createEvent: (data) => request('/admin/events', { method: 'POST', body: JSON.stringify(data) }),
   updateEvent: (id, data) => request(`/admin/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   eventAction: (id, action) => request(`/admin/events/${id}/${action}`, { method: 'POST' }),
-  attendees: (id) => request(`/admin/events/${id}/attendees`),
+  attendees: (id, status = 'active') => request(`/admin/events/${id}/attendees?status_filter=${encodeURIComponent(status)}`),
   summary: () => request('/admin/reports/summary'),
 };

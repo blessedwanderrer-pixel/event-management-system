@@ -18,3 +18,13 @@ supabase: Client = create_client(
     SUPABASE_URL,
     SUPABASE_KEY,
 )
+
+
+def create_auth_client() -> Client:
+    """Fresh Auth client per mutating auth request.
+
+    The shared `supabase` singleton keeps GoTrue session state. Reusing it for
+    signup/login across concurrent users can contaminate requests. Callers that
+    only verify a JWT may still use `supabase`.
+    """
+    return create_client(SUPABASE_URL, SUPABASE_KEY)

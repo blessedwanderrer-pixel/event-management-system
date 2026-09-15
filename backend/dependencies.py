@@ -32,7 +32,25 @@ def get_current_profile(
 
     profile = db.scalar(select(Profile).where(Profile.id == user_id))
     if profile is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Profile is not available")
+        metadata = getattr(user, "user_metadata", None) or {}
+        full_name = ""
+        if isinstance(metadata, dict):
+            full_name = str(metadata.get("full_name") or "").strip()
+        profile = Profile(
+            id=user_id,
+            email=str(getattr(user, "email", "") or ""),
+            full_name=full_name,
+            role="attendee",
+        )
+        db.add(profile)
+        try:
+            db.commit()
+            db.refresh(profile)
+        except Exception as error:
+            db.rollback()
+            profile = db.scalar(select(Profile).where(Profile.id == user_id))
+            if profile is None:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Profile is not available") from error
     return profile
 
 
