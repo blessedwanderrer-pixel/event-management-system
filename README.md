@@ -18,8 +18,11 @@ A full-stack event registration and management system for discovering events, re
 - Refresh-token session persistence across page reloads
 - Attendee registration and cancellation
 - Transactional event-row locking for capacity checks
+- Dedicated admin login at `/admin/login` using the same real authentication system
+- Role-checked admin access before any admin UI or admin API is granted
+- Admin dashboard with summary metrics and event management controls
 - Admin event creation, editing, publishing, completion, and cancellation
-- Admin attendee lists and real dashboard summary metrics
+- Admin attendee lists and report summary metrics via existing backend APIs
 - Protected routes and responsive states for loading, empty, and error conditions
 
 ## Structure
@@ -48,9 +51,17 @@ frontend/
 
 ## Environment
 
-Copy `backend/.env.example` to `backend/.env` and set `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_KEY`. Copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_URL`.
+Copy `backend/.env.example` to `backend/.env` and set backend-only values such as `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_KEY`.
 
-Never commit either `.env` file. The checked-in `.gitignore` excludes them.
+For local frontend development, set `VITE_API_URL` (see `frontend/.env.example` / `frontend/.env.development`) to the local API base URL, for example `http://127.0.0.1:8001`.
+
+Rules:
+
+- Backend secrets stay in backend environment variables only.
+- `DATABASE_URL` is never a frontend variable.
+- Supabase service-role keys and other secrets are never placed in frontend variables.
+- Never commit `.env` files. The checked-in `.gitignore` excludes them.
+- Do not put real secret values in this README.
 
 ## Run locally
 
@@ -58,7 +69,7 @@ Backend:
 
 ```powershell
 cd backend
-.\venv\Scripts\python.exe -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+.\venv\Scripts\python.exe -m uvicorn main:app --reload --host 127.0.0.1 --port 8001
 ```
 
 Frontend:
@@ -69,7 +80,7 @@ npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`. API documentation is available at `http://127.0.0.1:8000/docs`.
+Open `http://127.0.0.1:5173`. API documentation is available at `http://127.0.0.1:8001/docs`.
 
 Backend API tests:
 
@@ -97,9 +108,38 @@ npm run build
 npm run test:e2e
 ```
 
-## Admin setup
+## Admin access
 
-Create an account through the normal signup flow, then assign `role = 'admin'` for that profile through an authorized Supabase database process. There is no public endpoint that accepts or changes a role.
+Admin accounts are ordinary authenticated users whose `profiles.role` is `admin`. Create an account through the normal signup flow, then assign `role = 'admin'` for that profile through an authorized Supabase database process. There is no public endpoint that accepts or changes a role. An email address alone never grants admin access.
+
+### Admin frontend routes
+
+- `/admin/login` — dedicated admin login page
+- `/admin/dashboard` — admin control center (summary metrics + event management)
+- `/admin/events` — event list and lifecycle actions
+- `/admin/events/new`, `/admin/events/:id`, `/admin/events/:id/edit`, `/admin/events/:id/attendees`
+- `/admin/reports` — report/summary metrics
+
+Behavior:
+
+- Admin authentication uses the existing real authentication system (`POST /auth/login`) and loads the authenticated profile (`GET /auth/me`).
+- The user's actual role from the secure profile/auth path is checked before admin access is granted.
+- Unauthenticated users opening protected admin pages are redirected to `/admin/login`.
+- Authenticated non-admin users cannot access admin functionality (UI redirects/denies access; backend admin APIs still require admin authorization).
+
+### Admin dashboard capabilities
+
+The admin dashboard and related admin pages support:
+
+- Event creation
+- Event editing
+- Publishing events
+- Completing events
+- Cancelling events
+- Viewing attendees
+- Dashboard/report summary metrics
+
+These use the existing backend admin APIs listed below.
 
 ## Test accounts
 
@@ -128,17 +168,27 @@ Authentication:
 - `POST /auth/change-password`
 - `POST /auth/change-email`
 
+Profile:
+
+- `GET /profile/me`
+- `PATCH /profile/me`
+
 Events and registrations:
 
-- `GET /events/`, `GET /events/{event_id}`
-- `POST /registrations?event_id=...`, `GET /registrations/me`, `POST /registrations/{id}/cancel`
-- `GET/PATCH /profile/me`
+- `GET /events/`
+- `GET /events/{event_id}`
+- `POST /registrations?event_id=...`
+- `GET /registrations/me`
+- `POST /registrations/{registration_id}/cancel`
 
 Admin:
 
-- `GET/POST /admin/events`, `GET/PUT /admin/events/{id}`
-- `POST /admin/events/{id}/publish|complete|cancel`
-- `GET /admin/events/{id}/attendees`
+- `GET /admin/events`
+- `POST /admin/events`
+- `GET /admin/events/{event_id}`
+- `PUT /admin/events/{event_id}`
+- `POST /admin/events/{event_id}/{action}` where `{action}` is `publish`, `complete`, or `cancel`
+- `GET /admin/events/{event_id}/attendees`
 - `GET /admin/reports/summary`
 
 On the Vercel deployment, backend routes are also reachable under `/api/...` (for example `/api/auth/login`, `/api/events/`).
@@ -149,25 +199,41 @@ Latest local verification results:
 
 - Backend pytest (`tests/test_api.py`): **8 passed**
 - RLS security tests (`test_rls.py`): **18/18 passed**
-- Playwright (`npm run test:e2e`): **22 passed**
+- Playwright (`npm run test:e2e`): **30 passed**
 - Frontend production build (`npm run build`): **passed**
 
-Local authentication and core event flows were exercised against real Supabase test accounts (login, session/`/auth/me`, logout, change password, change name, attendee registration/cancellation/capacity, admin create/publish/update/attendees/complete, and RLS cross-user checks).
+Local authentication and core event-management flows were exercised against real Supabase test accounts.
 
-Fresh signup via Auth email, password-reset link completion, and email-change confirmation were **not** fully proven end-to-end when Supabase Auth email delivery or email rate limits blocked those flows.
+Verified flows include:
+
+- Login
+- Session persistence
+- Logout
+- Password change
+- Name change
+- Attendee event registration
+- Registration cancellation
+- Capacity protection
+- Admin event creation
+- Admin event editing
+- Admin event publishing
+- Admin event completion
+- Admin attendee viewing
+- RLS cross-user security
+- Protected admin access
+
+Fresh signup through Supabase email confirmation, password-reset link completion, and email-change confirmation were not fully proven end-to-end when Supabase Auth email delivery/rate limits blocked those flows. That blocker is email delivery/rate limiting, not an application logic failure by itself.
 
 ## Deployment
 
 Live deployment:
 
 - URL: [https://event-management-system-jet-gamma.vercel.app/](https://event-management-system-jet-gamma.vercel.app/)
-- Frontend: React/Vite on Vercel
-- Backend: FastAPI served through the root `vercel.json` multi-service configuration (`services.frontend` + `services.backend`, with `/api/*`, `/health`, and `/docs` routed to the backend)
-- Data and auth: Supabase Auth + PostgreSQL + RLS
+- Frontend: React + Vite on Vercel
+- Backend: FastAPI through the root `vercel.json` multi-service configuration
+- Database/Auth: Supabase PostgreSQL + Supabase Auth + RLS
 
-Optional alternate hosting:
-
-- Render/Railway: use `render.yaml` or run `uvicorn main:app --host 0.0.0.0 --port $PORT` from `backend/`.
+The root `vercel.json` configures `services.frontend` and `services.backend`, with `/api/*`, `/health`, and `/docs` routed to the backend.
 
 Environment notes for Vercel (root project, not a frontend-only deploy):
 
@@ -182,10 +248,14 @@ Deploy from the repository root (where `vercel.json` lives), for example:
 npx vercel deploy --prod --yes
 ```
 
-## Known limitations
+## Production Security Notes
 
-- Supabase email authentication can temporarily be affected by Auth email rate limits during repeated signup, password-reset, or email-change requests.
-- Email confirmation, password reset, and email-change confirmation depend on Supabase Auth email delivery and redirect configuration (`/auth/callback`, `/reset-password`).
-- Payments, QR check-in, SMS notifications, native mobile apps, advanced seating, and advanced ticket pricing are outside the current scope.
+- Enable Supabase leaked-password protection for additional production hardening.
+- Keep production secrets out of frontend code and source control.
+
+## Known Limitations
+
+- Supabase email-based authentication can be temporarily affected by Auth email rate limits during repeated signup, password-reset, or email-change requests.
+- Email confirmation, password reset, and email-change confirmation depend on Supabase Auth email delivery and redirect configuration.
+- Payments, QR check-in, SMS notifications, native mobile applications, advanced seating, and advanced ticket pricing are outside the current project scope.
 - The application may require additional infrastructure and optimization for very large production workloads.
-- Enable leaked-password protection in the Supabase Auth providers settings for production hardening.
