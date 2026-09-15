@@ -91,6 +91,7 @@ function App() {
               <Route path="/events/:id" element={<EventDetails />} />
               <Route path="/403" element={<Forbidden />} />
               <Route path="/admin" element={<AdminEntry />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/my-registrations" element={<Guard><Registrations /></Guard>} />
               <Route path="/profile" element={<Guard><Profile /></Guard>} />
               <Route path="/admin/dashboard" element={<AdminGuard><Dashboard /></AdminGuard>} />
@@ -117,11 +118,12 @@ function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const isAdminArea = location.pathname.startsWith('/admin') && location.pathname !== '/admin/login';
   const logout = async () => {
     closeMenu();
     await api.logout();
     clearSession();
-    navigate('/');
+    navigate(isAdminArea ? '/admin/login' : '/');
     refreshAuth();
   };
   const closeMenu = () => setMenuOpen(false);
@@ -130,7 +132,7 @@ function Layout() {
 
   return (
     <header className={`topbar ${menuOpen ? 'menu-open' : ''}`}>
-      <Link to="/" className="brand" onClick={closeMenu}>
+      <Link to={profile?.role === 'admin' && isAdminArea ? '/admin/dashboard' : '/'} className="brand" onClick={closeMenu}>
         <span className="brand-mark">NE</span>
         <span>Nowshera Events<span className="brand-dot">.</span></span>
       </Link>
@@ -143,29 +145,42 @@ function Layout() {
         <span /><span />
       </button>
       <nav className={menuOpen ? 'nav-open' : ''} aria-label="Primary">
-        <NavLink to="/events" onClick={closeMenu}>Explore</NavLink>
-        <NavLink to="/about" onClick={closeMenu}>About</NavLink>
-        <NavLink to="/contact" onClick={closeMenu}>Contact</NavLink>
-        <NavLink to="/faq" onClick={closeMenu}>FAQ</NavLink>
-        {profile && <NavLink to="/my-registrations" onClick={closeMenu}>My Registrations</NavLink>}
-        {profile?.role === 'admin' && (
-          <NavLink to="/admin/dashboard" onClick={closeMenu}>Admin Dashboard</NavLink>
-        )}
-        <div className="nav-auth">
-          {profile ? (
-            <>
-              <NavLink to="/profile" className="nav-profile" onClick={closeMenu}>
-                Profile
-              </NavLink>
+        {profile?.role === 'admin' && isAdminArea ? (
+          <>
+            <NavLink to="/admin/dashboard" onClick={closeMenu}>Admin Dashboard</NavLink>
+            <NavLink to="/admin/events" onClick={closeMenu}>Events</NavLink>
+            <NavLink to="/admin/reports" onClick={closeMenu}>Reports</NavLink>
+            <div className="nav-auth">
               <button className="text-button" type="button" onClick={logout}>Log out</button>
-            </>
-          ) : (
-            <>
-              <NavLink to="/login" onClick={closeMenu}>Log In</NavLink>
-              <NavLink to="/signup" className="nav-cta" onClick={closeMenu}>Create Account</NavLink>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <NavLink to="/events" onClick={closeMenu}>Explore</NavLink>
+            <NavLink to="/about" onClick={closeMenu}>About</NavLink>
+            <NavLink to="/contact" onClick={closeMenu}>Contact</NavLink>
+            <NavLink to="/faq" onClick={closeMenu}>FAQ</NavLink>
+            {profile && <NavLink to="/my-registrations" onClick={closeMenu}>My Registrations</NavLink>}
+            {profile?.role === 'admin' && (
+              <NavLink to="/admin/dashboard" onClick={closeMenu}>Admin Dashboard</NavLink>
+            )}
+            <div className="nav-auth">
+              {profile ? (
+                <>
+                  <NavLink to="/profile" className="nav-profile" onClick={closeMenu}>
+                    Profile
+                  </NavLink>
+                  <button className="text-button" type="button" onClick={logout}>Log out</button>
+                </>
+              ) : (
+                <>
+                  <NavLink to="/login" onClick={closeMenu}>Log In</NavLink>
+                  <NavLink to="/signup" className="nav-cta" onClick={closeMenu}>Create Account</NavLink>
+                </>
+              )}
+            </div>
+          </>
+        )}
       </nav>
     </header>
   );
@@ -185,7 +200,7 @@ function FloatingContactButtons() {
 function SiteFooter() {
   const { profile } = useAuthState();
   const location = useLocation();
-  if (location.pathname.startsWith('/admin')) return null;
+  if (location.pathname.startsWith('/admin') && location.pathname !== '/admin/login') return null;
 
   return (
     <footer className="site-footer">
@@ -211,6 +226,7 @@ function SiteFooter() {
           <Link to="/terms">Terms &amp; Conditions</Link>
           <Link to="/login">Login</Link>
           <Link to="/signup">Create Account</Link>
+          {!profile && <Link to="/admin/login">Admin Login</Link>}
           {profile && (
             <>
               <Link to="/profile">Profile</Link>
@@ -242,7 +258,7 @@ function postAuthDestination(profile, intendedFrom) {
   if (typeof intendedFrom !== 'string' || !intendedFrom.startsWith('/') || intendedFrom.startsWith('//')) {
     return fallback;
   }
-  if (intendedFrom === '/login' || intendedFrom === '/signup' || intendedFrom.startsWith('/auth/')) {
+  if (intendedFrom === '/login' || intendedFrom === '/signup' || intendedFrom === '/admin/login' || intendedFrom.startsWith('/auth/')) {
     return fallback;
   }
   const wantsAdmin = intendedFrom === '/admin' || intendedFrom.startsWith('/admin/');
@@ -263,7 +279,7 @@ function AdminGuard({ children }) {
   const { loading, profile } = useAuthState();
   const location = useLocation();
   if (loading) return <Loading />;
-  if (!profile) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  if (!profile) return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;
   return profile.role === 'admin' ? children : <Navigate to="/403" replace />;
 }
 
@@ -271,7 +287,7 @@ function AdminEntry() {
   const { loading, profile } = useAuthState();
   const location = useLocation();
   if (loading) return <Loading />;
-  if (!profile) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  if (!profile) return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;
   return profile.role === 'admin' ? <Navigate to="/admin/dashboard" replace /> : <Navigate to="/events" replace />;
 }
 
@@ -827,6 +843,113 @@ function PasswordField({ label, value, onChange, error, autoComplete }) {
 
 const Login = () => <AuthForm mode="login" />;
 const Signup = () => <AuthForm mode="signup" />;
+
+function AdminLogin() {
+  usePageMeta('Admin login', 'Sign in with an administrator account to manage Nowshera Events.');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { profile, loading, refreshAuth } = useAuthState();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [busy, setBusy] = useState(false);
+  const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    if (!loading && profile?.role === 'admin') {
+      const next = typeof location.state?.from === 'string' && location.state.from.startsWith('/admin')
+        ? location.state.from
+        : '/admin/dashboard';
+      navigate(next === '/admin/login' ? '/admin/dashboard' : next, { replace: true });
+    }
+  }, [loading, profile, location.state, navigate]);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError('');
+    const nextErrors = {};
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) nextErrors.email = 'Enter a valid email address.';
+    if (!password) nextErrors.password = 'Enter your password.';
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+
+    const requestId = ++requestIdRef.current;
+    setBusy(true);
+    try {
+      const result = await api.login({ email: email.trim(), password });
+      if (requestId !== requestIdRef.current) return;
+      if (!result.session?.access_token) {
+        setError(result.message || 'Unable to sign in.');
+        return;
+      }
+      saveSession(result.session);
+      const me = await refreshAuth();
+      if (requestId !== requestIdRef.current) return;
+      if (!me) {
+        clearSession();
+        setError('Signed in, but your profile could not be loaded. Please try again.');
+        return;
+      }
+      if (me.role !== 'admin') {
+        await api.logout().catch(() => {});
+        clearSession();
+        await refreshAuth();
+        setError('Administrator access required.');
+        return;
+      }
+      const intended = location.state?.from;
+      const destination = typeof intended === 'string'
+        && intended.startsWith('/admin')
+        && intended !== '/admin/login'
+        ? intended
+        : '/admin/dashboard';
+      navigate(destination, { replace: true });
+    } catch (err) {
+      if (requestId !== requestIdRef.current) return;
+      setError(err.message || 'Unable to sign in.');
+    } finally {
+      if (requestId === requestIdRef.current) setBusy(false);
+    }
+  };
+
+  if (loading) return <Loading />;
+  if (profile?.role === 'admin') return <Loading />;
+
+  return (
+    <main className="auth-page">
+      <div className="auth-panel">
+        <p className="eyebrow">Administrator access</p>
+        <h1>Admin Login</h1>
+        <p>Sign in with an authorized organizer account to manage events.</p>
+        {error && <Notice error>{error}</Notice>}
+        <form onSubmit={submit} noValidate>
+          <Field
+            label="Email address"
+            type="email"
+            value={email}
+            onChange={setEmail}
+            error={fieldErrors.email}
+            autoComplete="username"
+          />
+          <PasswordField
+            label="Password"
+            value={password}
+            onChange={setPassword}
+            error={fieldErrors.password}
+            autoComplete="current-password"
+          />
+          <button className="button primary full" disabled={busy}>
+            {busy ? 'Please wait...' : 'Log in'}
+          </button>
+        </form>
+        <p className="switch">
+          Looking for the public site? <Link to="/login">Attendee login</Link>
+        </p>
+      </div>
+    </main>
+  );
+}
 
 function ForgotPassword() {
   usePageMeta('Forgot password', 'Request a secure password reset link for your Nowshera Events account.');
@@ -1491,7 +1614,114 @@ function Dashboard() {
 }
 
 function AdminEvents() {
-  return <Navigate to="/admin/dashboard" replace />;
+  usePageMeta('Manage events', 'Create, edit, publish, and complete events in the Nowshera Events admin workspace.');
+  const [events, setEvents] = useState(null);
+  const [error, setError] = useState('');
+  const [pending, setPending] = useState(null);
+  const [actionBusy, setActionBusy] = useState(false);
+  const notify = useToast();
+
+  const load = () => api.adminEvents()
+    .then(data => { setEvents(data); setError(''); })
+    .catch(e => { setEvents(null); setError(e.message); });
+
+  useEffect(() => { load(); }, []);
+
+  const actionLabels = { publish: 'published', complete: 'completed', cancel: 'cancelled' };
+
+  const runAction = async (id, verb) => {
+    setActionBusy(true);
+    setError('');
+    try {
+      await api.eventAction(id, verb);
+      setPending(null);
+      load();
+      notify(`Event ${actionLabels[verb] || verb}.`);
+    } catch (e) {
+      setError(e.message);
+      notify(e.message, 'error');
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const requestAction = (id, verb) => (
+    verb === 'cancel' || verb === 'complete'
+      ? setPending({ id, verb })
+      : runAction(id, verb)
+  );
+
+  return (
+    <Page
+      eyebrow="Admin workspace"
+      title="Manage events"
+      action={<Link className="button primary" to="/admin/events/new">+ Create Event</Link>}
+    >
+      {error && <Notice error>{error}</Notice>}
+      {events === null && !error && <Loading />}
+      {events && !events.length && (
+        <Empty
+          title="No events yet"
+          text="Create your first event to start managing the calendar."
+          action={<Link className="button primary" to="/admin/events/new">+ Create Event</Link>}
+        />
+      )}
+      {events && events.length > 0 && (
+        <div className="table-wrap admin-section">
+          <table>
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Date</th>
+                <th>Seats</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {events.map(e => (
+                <tr key={e.id}>
+                  <td>
+                    <strong>{e.title}</strong>
+                    <small>{e.location}</small>
+                  </td>
+                  <td>{e.event_date}{e.event_time ? ` · ${String(e.event_time).slice(0, 5)}` : ''}</td>
+                  <td>{e.active_registrations} / {e.capacity}</td>
+                  <td><span className="tag">{e.status}</span></td>
+                  <td className="table-actions">
+                    <Link className="button ghost compact" to={`/admin/events/${e.id}`}>View</Link>
+                    <Link className="button ghost compact" to={`/admin/events/${e.id}/edit`}>Edit</Link>
+                    <Link className="button ghost compact" to={`/admin/events/${e.id}/attendees`}>View Attendees</Link>
+                    {e.status === 'draft' && (
+                      <>
+                        <button className="button primary compact" type="button" disabled={actionBusy} onClick={() => requestAction(e.id, 'publish')}>Publish</button>
+                        <button className="button ghost compact" type="button" disabled={actionBusy} onClick={() => requestAction(e.id, 'cancel')}>Cancel</button>
+                      </>
+                    )}
+                    {e.status === 'published' && (
+                      <>
+                        <button className="button primary compact" type="button" disabled={actionBusy} onClick={() => requestAction(e.id, 'complete')}>Complete</button>
+                        <button className="button ghost compact" type="button" disabled={actionBusy} onClick={() => requestAction(e.id, 'cancel')}>Cancel</button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {pending && (
+        <ConfirmDialog
+          title={`${pending.verb === 'cancel' ? 'Cancel' : 'Complete'} this event?`}
+          description="This changes the event lifecycle and may close future attendee actions."
+          confirmLabel={pending.verb === 'cancel' ? 'Cancel event' : 'Complete event'}
+          onConfirm={() => runAction(pending.id, pending.verb)}
+          onCancel={() => setPending(null)}
+        />
+      )}
+    </Page>
+  );
 }
 
 function EventForm() {

@@ -9,6 +9,7 @@ const publicRoutes = [
   ['/terms', 'Terms & Conditions'],
   ['/login', 'Welcome back.'],
   ['/signup', 'Make yourself at home.'],
+  ['/admin/login', 'Admin Login'],
   ['/forgot-password', 'Find your way back.'],
   ['/reset-password', 'Choose a new password.'],
   ['/auth/callback', 'Almost there.'],
@@ -32,12 +33,13 @@ test('protected attendee route redirects to login', async ({ page }) => {
 
 test('protected admin route redirects to login', async ({ page }) => {
   await page.goto('/admin/dashboard');
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/admin\/login$/);
+  await expect(page.getByRole('heading', { name: 'Admin Login' })).toBeVisible();
 });
 
 test('admin entry route redirects unauthenticated users to login', async ({ page }) => {
   await page.goto('/admin');
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/admin\/login$/);
 });
 
 test('event discovery loads live event data', async ({ page }) => {
@@ -66,8 +68,10 @@ test('footer links are present on public pages', async ({ page }) => {
   await expect(footer.getByRole('link', { name: 'FAQ' })).toBeVisible();
   await expect(footer.getByRole('link', { name: 'Privacy Policy' })).toBeVisible();
   await expect(footer.getByRole('link', { name: 'Terms & Conditions' })).toBeVisible();
-  await expect(footer.getByRole('link', { name: 'Login' })).toBeVisible();
+  await expect(footer.getByRole('link', { name: 'Login', exact: true })).toBeVisible();
   await expect(footer.getByRole('link', { name: 'Create Account' })).toBeVisible();
+  await expect(footer.getByRole('link', { name: 'Admin Login', exact: true })).toBeVisible();
+  await expect(footer.getByRole('link', { name: 'Admin Login', exact: true })).toHaveAttribute('href', '/admin/login');
 });
 
 test('public navbar exposes explore and account links', async ({ page }) => {
@@ -223,6 +227,13 @@ async function fillLogin(page, email = 'user@example.com') {
   await page.getByRole('button', { name: 'Log in' }).click();
 }
 
+async function fillAdminLogin(page, email = 'admin@example.com') {
+  await page.goto('/admin/login');
+  await page.getByLabel('Email address').fill(email);
+  await page.locator('input[type="password"]').fill('Password123!');
+  await page.getByRole('button', { name: 'Log in' }).click();
+}
+
 test('admin login redirects to admin dashboard', async ({ page }) => {
   await mockAuthSession(page, {
     id: '00000000-0000-0000-0000-000000000001',
@@ -243,7 +254,7 @@ test('admin login redirects to admin dashboard', async ({ page }) => {
       available_spots: 10,
     }],
   });
-  await fillLogin(page, 'admin.test@example.com');
+  await fillAdminLogin(page, 'admin.test@example.com');
   await expect(page).toHaveURL(/\/admin\/dashboard$/);
   await expect(page.getByRole('heading', { name: 'Admin dashboard' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Event management' })).toBeVisible();
@@ -274,7 +285,7 @@ test('admin login preserves intended protected destination', async ({ page }) =>
     role: 'admin',
   });
   await page.goto('/admin/reports');
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/admin\/login$/);
   await page.getByLabel('Email address').fill('admin.test@example.com');
   await page.locator('input[type="password"]').fill('Password123!');
   await page.getByRole('button', { name: 'Log in' }).click();
@@ -289,11 +300,12 @@ test('attendee login does not follow admin intended destination', async ({ page 
     role: 'attendee',
   });
   await page.goto('/admin/dashboard');
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/admin\/login$/);
   await page.getByLabel('Email address').fill('attendee.a@test.example');
   await page.locator('input[type="password"]').fill('Password123!');
   await page.getByRole('button', { name: 'Log in' }).click();
-  await expect(page).toHaveURL(/\/events$/);
+  await expect(page.getByText('Administrator access required.')).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/login$/);
 });
 
 test('admin dashboard create and publish controls work', async ({ page }) => {
@@ -316,7 +328,7 @@ test('admin dashboard create and publish controls work', async ({ page }) => {
     role: 'admin',
   }, { events: [draftEvent] });
 
-  await fillLogin(page, 'admin.test@example.com');
+  await fillAdminLogin(page, 'admin.test@example.com');
   await expect(page.getByText('Draft Launch Night')).toBeVisible();
 
   await page.getByRole('link', { name: '+ Create Event' }).first().click();
